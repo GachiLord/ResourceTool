@@ -1,0 +1,1 @@
+﻿LiquidFuel Oxidizer MonoPropellant XenonGas Ore ArgonGas Lithium EnrichedUranium DepletedFuel
