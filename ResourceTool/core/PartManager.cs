@@ -7,8 +7,14 @@ namespace ResourceTool.core
 {
     public class PartManager
     {
+        protected int TotalParts;
 
-        public static List<Part> GetChildParts(Part split, int splitCount, string separator,Part forbidden, List<Part> parts)
+        public PartManager(int totalParts)
+        {
+            TotalParts = totalParts;
+        }
+
+        private static List<Part> GetAttachedParts(Part split, int splitCount, string separator,Part forbidden, List<Part> parts)
         {
 
             foreach (Part part in split.children) {
@@ -16,13 +22,13 @@ namespace ResourceTool.core
                     if (!IsMatch(part.name, separator))
                     {
                         parts.Add(part);
-                        parts.Concat(GetChildParts(part, splitCount, separator, forbidden, parts));
+                        parts.Concat(GetAttachedParts(part, splitCount, separator, forbidden, parts));
                     }
                     else if (splitCount > 0)
                     {
                         parts.Add(part);
                         splitCount--;
-                        parts.Concat(GetChildParts(part, splitCount, separator, forbidden, parts));
+                        parts.Concat(GetAttachedParts(part, splitCount, separator, forbidden, parts));
                     }
                 }
 
@@ -33,12 +39,6 @@ namespace ResourceTool.core
             return parts;
         }
 
-        public static List<Part> GetParentParts(Part split, int splitCount, string separator, List<Part> parts) {
-
-            Part FarParent = GetFarthestParent(split, splitCount, separator);
-
-            return GetChildParts(FarParent, splitCount, separator, split, new List<Part>() { FarParent });
-        }
 
         private static Part GetFarthestParent(Part part, int splitCount, string separator) {
 
@@ -51,6 +51,15 @@ namespace ResourceTool.core
             return part;
         }
 
+        public List<Part> GetChildParts(Part split, int splitCount = -1, string separator = "dockingPort") {
+            splitCount = splitCount < 0 ? TotalParts : splitCount;
+            return GetAttachedParts(split, splitCount, separator, split, new List<Part>());
+        }
+
+        public List<Part> GetParentParts(Part split, int splitCount = -1, string separator = "dockingPort") {
+            splitCount = splitCount < 0 ? TotalParts : splitCount;
+            return GetAttachedParts(GetFarthestParent(split, splitCount, separator), splitCount, separator, split, new List<Part>());
+        }
 
         public static List<Part> Matched(List<Part> parts, string reg) {
             List<Part> output = new List<Part>();

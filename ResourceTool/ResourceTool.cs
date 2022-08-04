@@ -15,18 +15,19 @@ namespace ResourceTool
         //fields
         protected Part CurentPart;
         protected ResourceManager ResMng;
+        protected PartManager PartMng;
 
 
         //GUI options
         [KSPEvent(active = true, guiActive = true, guiActiveEditor = false, guiName = "Move resources up")]
         protected void MoveResourcesUp()
         {
-            ResMng.Transfer(PartManager.GetParentParts(CurentPart, FlightGlobals.ActiveVessel.parts.Count(), "dockingPort", new List<Part>()), PartManager.GetChildParts(CurentPart, FlightGlobals.ActiveVessel.parts.Count(), "dockingPort", CurentPart, new List<Part>()));
+            ResMng.Transfer(PartMng.GetParentParts(CurentPart), PartMng.GetChildParts(CurentPart));
         }
         [KSPEvent(active = true, guiActive = true, guiActiveEditor = false, guiName = "Move resources down")]
         protected void MoveResourcesDown()
         {
-            ResMng.Transfer(PartManager.GetChildParts(CurentPart, FlightGlobals.ActiveVessel.parts.Count(), "dockingPort", CurentPart, new List<Part>()), PartManager.GetParentParts(CurentPart, FlightGlobals.ActiveVessel.parts.Count(), "dockingPort", new List<Part>()));
+            ResMng.Transfer(PartMng.GetChildParts(CurentPart), PartMng.GetParentParts(CurentPart));
         }
 
         //methods
@@ -37,9 +38,10 @@ namespace ResourceTool
         //standart methods 
         public void Start()
         {
-            //get resource names from file
+            //setup
             string path = AppDomain.CurrentDomain.BaseDirectory + @"\GameData\ResourceTool\resourceList.txt";
             ResMng = new ResourceManager(File.ReadAllText(path).Split(' '));
+            PartMng = new PartManager(FlightGlobals.ActiveVessel.parts.Count());
             //add event listener
             GameEvents.onPartActionUIShown.Add(SetCurentPart);
             //localization
