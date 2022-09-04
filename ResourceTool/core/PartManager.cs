@@ -7,41 +7,18 @@ namespace ResourceTool.core
 {
     public class PartManager
     {
+        protected Vessel Vessel;
         protected int TotalParts;
 
-        public PartManager(int totalParts)
+        public PartManager(Vessel vessel)
         {
-            TotalParts = totalParts;
-        }
-
-        private static List<Part> GetAttachedParts(Part split, int splitCount, string separator,Part forbidden, List<Part> parts)
-        {
-
-            foreach (Part part in split.children) {
-                if (part != forbidden) {
-                    if (!IsMatch(part.name, separator))
-                    {
-                        parts.Add(part);
-                        parts.Concat(GetAttachedParts(part, splitCount, separator, forbidden, parts));
-                    }
-                    else if (splitCount > 0)
-                    {
-                        parts.Add(part);
-                        splitCount--;
-                        parts.Concat(GetAttachedParts(part, splitCount, separator, forbidden, parts));
-                    }
-                }
-
-
-            }
-
-            
-            return parts;
+            Vessel = vessel;
+            TotalParts = Vessel.parts.Count();
         }
 
 
-        private static Part GetFarthestParent(Part part, int splitCount, string separator) {
-
+        protected static Part GetFarthestParent(Part part, int splitCount, string separator) 
+        {
             while (part.parent != null) {
                 if (!IsMatch(part.parent.name, separator)) part = part.parent;
                 else if (splitCount > 0) { part = part.parent; splitCount--; }
@@ -51,15 +28,18 @@ namespace ResourceTool.core
             return part;
         }
 
-        public List<Part> GetChildParts(Part split, int splitCount = -1, string separator = "dockingPort") {
-            splitCount = splitCount < 0 ? TotalParts : splitCount;
-            return GetAttachedParts(split, splitCount, separator, split, new List<Part>());
+        protected List<Part> GetAttachedParts(Part node, List<Part> parts)
+        {
+            if (!parts.Contains(node))
+            {
+                parts.Add(node);
+                if (node.children != null) foreach (var item in node.children) parts.Concat(GetAttachedParts(item, parts));
+
+            }
+
+            return parts;
         }
 
-        public List<Part> GetParentParts(Part split, int splitCount = -1, string separator = "dockingPort") {
-            splitCount = splitCount < 0 ? TotalParts : splitCount;
-            return GetAttachedParts(GetFarthestParent(split, splitCount, separator), splitCount, separator, split, new List<Part>());
-        }
 
         public static List<Part> Matched(List<Part> parts, string reg) {
             List<Part> output = new List<Part>();
@@ -78,9 +58,21 @@ namespace ResourceTool.core
             return pattern.IsMatch(name);
         }
 
+        public List<Part> GetChildParts(Part part)
+        {
+            var parents = GetAttachedParts(part, new List<Part>());
+            var output = new List<Part>();
 
 
+            foreach (var p in Vessel.parts) { if (!parents.Contains(p)) output.Add(p); }
 
-            
+
+            return output;
+        }
+
+        public List<Part> GetParentParts(Part part) {
+            return GetAttachedParts(part, new List<Part>());
+        }
+
     }
 }

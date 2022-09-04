@@ -4,7 +4,7 @@ namespace ResourceTool.core
 {
     public class ResourceManager
     {
-        private static readonly IResourceBroker Broker = new ResourceBroker();
+        protected static readonly IResourceBroker Broker = new ResourceBroker();
 
         protected readonly string[] Resources = new string[] {};
 
@@ -14,10 +14,16 @@ namespace ResourceTool.core
             Resources = resourceNameList;
             Flow = flow;
         }
-        public void Transfer(List<Part> v1, List<Part> v2) {
+        public string[] Transfer(List<Part> v1, List<Part> v2) {
+            List<string> transferedResources = new List<string>();
+
+
             foreach (var r in Resources) {
-                TransferRes(v1, v2, r);
+                if (TransferRes(v1, v2, r)) transferedResources.Add(r);
             }
+
+
+            return transferedResources.ToArray();
         }
 
         protected List<Part> GetResParts(string resName, List<Part> parts) {
@@ -33,15 +39,16 @@ namespace ResourceTool.core
             return matched;
         }
 
-        protected void TransferRes(List<Part> v1, List<Part> v2, string resName) {
-            double am2 = GetResAmount(v2, resName);
+        protected bool TransferRes(List<Part> v1, List<Part> v2, string resName) {
+            double am2 = GetAmountOrStorageOfResource(v2, resName); if (am2 == 0) return false;
             double usedRes = 0;
             double requiredAmount;
 
+            
 
             //fill v1
             foreach (Part part in v1) {
-                requiredAmount = Broker.StorageAvailable(part, resName, 0, Flow, 1);
+                requiredAmount = Broker.StorageAvailable(part, resName, 0, Flow, 1); 
 
                 if (am2 - requiredAmount >= 0)
                 {
@@ -56,6 +63,8 @@ namespace ResourceTool.core
                 }
             }
 
+            //fill checking
+            if (usedRes == 0) return false;
 
             //empty v2
             foreach (Part part in v2) {
@@ -72,9 +81,13 @@ namespace ResourceTool.core
                     break;
                 }
             }
+
+
+
+            return true;
         }
 
-        protected double GetResAmount(List<Part> parts, string resName, string t = "a") {
+        protected double GetAmountOrStorageOfResource(List<Part> parts, string resName, string t = "a") {
             double amount = 0;
 
 
